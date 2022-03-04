@@ -1,0 +1,68 @@
+pipeline {
+options{
+buildDiscarder(logRotator(numToKeepStr: '7'))
+}    
+agent any
+environment{
+VERSION = 'latest'
+PROJECT = 'node-app'
+IMAGE = 'node-app:latest'
+registry = 'sampathgorre'
+}
+stages {
+stage('git checkout'){
+steps {
+git branch: 'pipeline-test', credentialsId: 'github_credentials', url: 'https://github.com/sailusampathraj/node-app.git'
+}
+}
+stage('Build preperations'){
+steps
+    {
+    script
+    {
+     // calculate GIT lastest commit short-hash
+        gitCommitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+        shortCommitHash = gitCommitHash.take(7)
+        // calculate a sample version tag
+        VERSION = shortCommitHash
+        // set the build display name
+        currentBuild.displayName = "${PROJECT}-${VERSION}"
+        IMAGE = "$registry/${PROJECT}.${BUILD_NUMBER}.${VERSION}"
+    }
+   }
+}
+stage('Docker build')
+        {
+            steps
+            {
+                script
+                {
+                    // Build the docker image using a Dockerfile
+                    docker.build("$IMAGE", "-f Dockerfile .")
+                }
+            }
+        }
+stage('Docker push')
+        {
+            steps
+            {
+                script
+                {
+                    withDockerRegistry(credentialsId: 'dockerhub-cred', url: 'https://index.docker.io/v1/')
+                    {
+                    /* groovylint-disable-next-line NestedBlockDepth */
+                       docker.image(IMAGE).push()
+                    }
+                }
+            }
+        }
+}    
+    post
+    {
+        always
+        {
+            // make sure that the Docker image is removed
+            sh "docker rmi $IMAGE | true"
+        }
+    }
+}        
