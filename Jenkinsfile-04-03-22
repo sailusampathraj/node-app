@@ -28,7 +28,8 @@ withDockerRegistry(credentialsId: 'dockerhub-cred', url: 'https://index.docker.i
 }
 }
 }
-post
+// post build not working need to check
+/* post
 {
 always
 {
@@ -36,7 +37,7 @@ always
 sh 'docker rmi ${IMAGE_URL_WITH_TAG} | true'
 }
     
-}
+} */
 def getDockerTag(){
     def tag  = sh script: 'git rev-parse --short HEAD', returnStdout: true
     return tag
