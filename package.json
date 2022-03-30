@@ -11,4 +11,5 @@
     "express": "^4.16.1"
   }
   
+  "publishConfig":{"registry":"https://myserver1234.jfrog.io/artifactory/api/npm/mynpm/"}
 }
